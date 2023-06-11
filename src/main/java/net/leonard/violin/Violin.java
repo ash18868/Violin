@@ -40,6 +40,7 @@ public class Violin
     {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
+        ModItems.register(modEventBus);
         ModEntities.register(modEventBus);
 
 
@@ -52,7 +53,6 @@ public class Violin
         // Register the item to a creative tab
         modEventBus.addListener(this::addCreative);
     }
-    //Very important Comment
 
     private void commonSetup(final FMLCommonSetupEvent event)
     {
