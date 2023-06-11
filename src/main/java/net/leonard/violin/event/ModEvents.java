@@ -16,11 +16,14 @@ public class ModEvents {
     @SubscribeEvent
     public static void entityAttributeEvent(EntityAttributeCreationEvent event) {
         event.put(ModEntities.TIGER.get(), TigerEntity.setAttributes());
+        event.put(ModEntities.HEROBRINE.get(), TigerEntity.setAttributes());
     }
 
     @SubscribeEvent
     public static void entitySpawnRestriction(SpawnPlacementRegisterEvent event) {
         event.register(ModEntities.TIGER.get(), SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                Animal::checkAnimalSpawnRules, SpawnPlacementRegisterEvent.Operation.REPLACE);
+        event.register(ModEntities.HEROBRINE.get(), SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 Animal::checkAnimalSpawnRules, SpawnPlacementRegisterEvent.Operation.REPLACE);
     }
 }

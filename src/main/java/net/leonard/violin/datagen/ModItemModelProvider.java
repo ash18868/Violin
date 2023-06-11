@@ -24,6 +24,7 @@ public class ModItemModelProvider extends ItemModelProvider {
         saplingItem(ModBlocks.EBONY_SAPLING);*/
 
         withExistingParent(ModItems.TIGER_SPAWN_EGG.getId().getPath(), mcLoc("item/template_spawn_egg"));
+        withExistingParent(ModItems.HEROBRINE_SPAWN_EGG.getId().getPath(), mcLoc("item/template_spawn_egg"));
     }
 
     /*private ItemModelBuilder saplingItem(RegistryObject<Block> item) {

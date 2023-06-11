@@ -28,6 +28,9 @@ public class ModItems {
     public static final RegistryObject<Item> TIGER_SPAWN_EGG = ITEMS.register("tiger_spawn_egg",
             () -> new ForgeSpawnEggItem(ModEntities.TIGER, 0xD57E36, 0x1D0D00,
                     new Item.Properties()));
+    public static final RegistryObject<Item> HEROBRINE_SPAWN_EGG = ITEMS.register("herobrine_spawn_egg",
+            () -> new ForgeSpawnEggItem(ModEntities.HEROBRINE, 0x15F7EC, 0xFFC393,
+                    new Item.Properties()));
 
     /*public static final RegistryObject<Item> ANIMATED_ITEM = ITEMS.register("animated_item",
             () -> new AnimatedItem(new Item.Properties()));

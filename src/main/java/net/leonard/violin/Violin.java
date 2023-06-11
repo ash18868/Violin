@@ -6,6 +6,7 @@ import com.mojang.logging.LogUtils;
 //import net.leonard.violin.block.entity.client.AnimatedBlockRenderer;
 import net.leonard.violin.entity.ModEntities;
 import net.leonard.violin.entity.client.TigerRenderer;
+import net.leonard.violin.entity.client.HerobrineRenderer;
 //import net.leonard.violin.item.ModCreativeModeTabs;
 //import net.leonard.violin.item.ModItems;
 //import net.leonard.violin.sound.ModSounds;
@@ -61,14 +62,17 @@ public class Violin
 
     private void addCreative(CreativeModeTabEvent.BuildContents event)
     {
+
         if(event.getTab() == CreativeModeTabs.SPAWN_EGGS)
         {
             event.accept(ModItems.TIGER_SPAWN_EGG);
+            event.accept(ModItems.HEROBRINE_SPAWN_EGG);
         }
 
         if(event.getTab() == ModCreativeModeTabs.TUTORIAL_TAB)
         {
             event.accept(ModItems.TIGER_SPAWN_EGG);
+            event.accept(ModItems.HEROBRINE_SPAWN_EGG);
         }
 
     }
@@ -82,6 +86,7 @@ public class Violin
         public static void onClientSetup(FMLClientSetupEvent event)
         {
                 EntityRenderers.register(ModEntities.TIGER.get(), TigerRenderer::new);
+                EntityRenderers.register(ModEntities.HEROBRINE.get(), HerobrineRenderer::new);
         }
     }
 }
