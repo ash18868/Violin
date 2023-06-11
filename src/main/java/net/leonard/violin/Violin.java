@@ -9,6 +9,8 @@ import net.leonard.violin.entity.client.TigerRenderer;
 //import net.leonard.violin.item.ModCreativeModeTabs;
 //import net.leonard.violin.item.ModItems;
 //import net.leonard.violin.sound.ModSounds;
+import net.leonard.violin.item.ModCreativeModeTabs;
+import net.leonard.violin.item.ModItems;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraft.world.item.CreativeModeTabs;
@@ -59,6 +61,15 @@ public class Violin
 
     private void addCreative(CreativeModeTabEvent.BuildContents event)
     {
+        if(event.getTab() == CreativeModeTabs.SPAWN_EGGS)
+        {
+            event.accept(ModItems.TIGER_SPAWN_EGG);
+        }
+
+        if(event.getTab() == ModCreativeModeTabs.TUTORIAL_TAB)
+        {
+            event.accept(ModItems.TIGER_SPAWN_EGG);
+        }
 
     }
 
