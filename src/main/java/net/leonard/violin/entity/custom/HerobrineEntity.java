@@ -11,6 +11,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 //import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.animal.Rabbit;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraft.world.entity.monster.Creeper;
@@ -25,6 +26,12 @@ import software.bernie.geckolib.core.animatable.instance.SingletonAnimatableInst
 import software.bernie.geckolib.core.animation.*;
 import software.bernie.geckolib.core.object.PlayState;
 
+/*
+Basically, I want herobrine to always stare at the player, if the player gets too close to Herobrine, Herobrine will
+approach the player, but after getting within a certain distance will teleport away, scaring, but not harming the player,
+herobrine should also only be around at night
+*/
+
 public class HerobrineEntity extends Monster implements GeoEntity {
     private AnimatableInstanceCache cache = new SingletonAnimatableInstanceCache(this);
 
@@ -32,6 +39,14 @@ public class HerobrineEntity extends Monster implements GeoEntity {
         super(entityType, level);
     }
 
+    /*public static AttributeSupplier.Builder createAttributes()
+    {
+        return Monster.createMonsterAttributes().add(Attributes.MAX_HEALTH, 40.0D)
+                .add(Attributes.MOVEMENT_SPEED, (double) 0.3F)
+                .add(Attributes.ATTACK_DAMAGE, 12.0D);
+    }*/
+
+    //This does not work, but we'll leave it here
     public static AttributeSupplier setAttributes() {
         return Monster.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 16D)
@@ -43,8 +58,11 @@ public class HerobrineEntity extends Monster implements GeoEntity {
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(1, new FloatGoal(this));
-        this.goalSelector.addGoal(2, new LookAtPlayerGoal(this, Player.class, 500.0f, 1.0f, false));
-        this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.0D, false));
+        this.goalSelector.addGoal(3, new LookAtPlayerGoal(this, Player.class, 500.0f, 1.0f, false));
+        this.goalSelector.addGoal(2, new AvoidEntityGoal<>(this, Player.class, 8.0F, 2.2D, 2.2D));
+
+        //I cannot for the life of me get this to be reasonable
+        //this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.0D, false));
 
         // Goal Ideas
         // Look at player goal!!!!
@@ -83,4 +101,38 @@ public class HerobrineEntity extends Monster implements GeoEntity {
     public AnimatableInstanceCache getAnimatableInstanceCache() {
         return cache;
     }
+// Begin Herobrine behavior
+
+
+    //Check every tick
+    public void tick() {
+        if (this.herobrine.getTarget() == null) {
+            super.setTarget((LivingEntity)null);
+        }
+
+        if (this.pendingTarget != null) {
+            if (--this.aggroTime <= 0) {
+                this.target = this.pendingTarget;
+                this.pendingTarget = null;
+                super.start();
+            }
+        } else {
+            if (this.target != null && !this.enderman.isPassenger()) {
+                if (this.enderman.isLookingAtMe((Player)this.target)) {
+                    if (this.target.distanceToSqr(this.enderman) < 16.0D) {
+                        this.enderman.teleport();
+                    }
+
+                    this.teleportTime = 0;
+                } else if (this.target.distanceToSqr(this.enderman) > 256.0D && this.teleportTime++ >= this.adjustedTickDelay(30) && this.enderman.teleportTowards(this.target)) {
+                    this.teleportTime = 0;
+                }
+            }
+
+            super.tick();
+        }
+
+    }
+
+
 }
