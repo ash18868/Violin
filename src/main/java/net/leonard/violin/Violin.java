@@ -39,6 +39,7 @@ public class Violin
 
     public Violin()
     {
+
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
         ModItems.register(modEventBus);

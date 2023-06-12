@@ -25,10 +25,10 @@ import software.bernie.geckolib.core.animatable.instance.SingletonAnimatableInst
 import software.bernie.geckolib.core.animation.*;
 import software.bernie.geckolib.core.object.PlayState;
 
-public class TigerEntity extends Animal implements GeoEntity {
+public class Tiger extends Animal implements GeoEntity {
     private AnimatableInstanceCache cache = new SingletonAnimatableInstanceCache(this);
 
-    public TigerEntity(EntityType<? extends Animal> entityType, Level level) {
+    public Tiger(EntityType<? extends Animal> entityType, Level level) {
         super(entityType, level);
     }
 

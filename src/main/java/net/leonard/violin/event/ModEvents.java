@@ -2,7 +2,7 @@ package net.leonard.violin.event;
 
 import net.leonard.violin.Violin;
 import net.leonard.violin.entity.ModEntities;
-import net.leonard.violin.entity.custom.TigerEntity;
+import net.leonard.violin.entity.custom.Tiger;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.entity.animal.Animal;
@@ -17,8 +17,8 @@ import net.minecraftforge.fml.common.Mod;
 public class ModEvents {
     @SubscribeEvent
     public static void entityAttributeEvent(EntityAttributeCreationEvent event) {
-        event.put(ModEntities.TIGER.get(), TigerEntity.setAttributes());
-        event.put(ModEntities.HEROBRINE.get(), TigerEntity.setAttributes());
+        event.put(ModEntities.TIGER.get(), Tiger.setAttributes());
+        event.put(ModEntities.HEROBRINE.get(), Tiger.setAttributes());
     }
 
     @SubscribeEvent
