@@ -4,6 +4,9 @@ Basically, I want herobrine to always stare at the player, if the player gets to
 approach the player, but after getting within a certain distance will teleport away, scaring, but not harming the player,
 herobrine should also only be around at night
 */
+
+// Next step is to set Herobrine agro to active when both player is too close, and is looking at Herobrine
+
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
@@ -108,21 +111,22 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
 
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
-        this.goalSelector.addGoal(1, new net.leonard.violin.entity.custom.Herobrine.HerobrineFreezeWhenLookedAt(this));
-        this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.0D, false));
-        this.goalSelector.addGoal(7, new WaterAvoidingRandomStrollGoal(this, 1.0D, 0.0F));
-        this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
-        this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
-        this.goalSelector.addGoal(10, new net.leonard.violin.entity.custom.Herobrine.HerobrineLeaveBlockGoal(this));
-        this.goalSelector.addGoal(11, new net.leonard.violin.entity.custom.Herobrine.HerobrineTakeBlockGoal(this));
+        this.goalSelector.addGoal(2, new LookAtPlayerGoal(this, Player.class, 500.0f, 1.0f, false));
+        //this.goalSelector.addGoal(1, new net.leonard.violin.entity.custom.Herobrine.HerobrineFreezeWhenLookedAt(this));
+        this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.0D, false));
         this.targetSelector.addGoal(1, new net.leonard.violin.entity.custom.Herobrine.HerobrineLookForPlayerGoal(this, this::isAngryAt));
+//Maybe put this back in        //
         this.targetSelector.addGoal(2, new HurtByTargetGoal(this));
-        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Endermite.class, true, false));
+        //this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Endermite.class, true, false));
         this.targetSelector.addGoal(4, new ResetUniversalAngerTargetGoal<>(this, false));
     }
 
     public static AttributeSupplier.Builder createAttributes() {
-        return Monster.createMonsterAttributes().add(Attributes.MAX_HEALTH, 40.0D).add(Attributes.MOVEMENT_SPEED, (double)0.3F).add(Attributes.ATTACK_DAMAGE, 7.0D).add(Attributes.FOLLOW_RANGE, 64.0D);
+        return Monster.createMonsterAttributes()
+                .add(Attributes.MAX_HEALTH, 40.0D)
+                .add(Attributes.MOVEMENT_SPEED, (double)0.3F)
+                .add(Attributes.ATTACK_DAMAGE, 7.0D)
+                .add(Attributes.FOLLOW_RANGE, 4.0D); //Changed from 64 to 4
     }
 
     // More Geckolibrary
@@ -196,7 +200,7 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
         if (this.tickCount >= this.lastStareSound + 400) {
             this.lastStareSound = this.tickCount;
             if (!this.isSilent()) {
-                //this.level.playLocalSound(this.getX(), this.getEyeY(), this.getZ(), SoundEvents.HEROBRINE_STARE, this.getSoundSource(), 2.5F, 1.0F, false);
+                this.level.playLocalSound(this.getX(), this.getEyeY(), this.getZ(), SoundEvents.ENDERMAN_STARE, this.getSoundSource(), 2.5F, 1.0F, false);
                 System.out.println("HEROBRINE_START SOUND");
             }
         }
@@ -238,7 +242,7 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
     boolean isLookingAtMe(Player p_32535_) {
         ItemStack itemstack = p_32535_.getInventory().armor.get(3);
         if (net.leonardforge.common.ForgeHooks.shouldSuppressEnderManAnger(this, p_32535_, itemstack)) {
-            return false;
+            return false; // if this statement returns true, we'll register that the player is not technically looking at us
         } else {
             Vec3 vec3 = p_32535_.getViewVector(1.0F).normalize();
             Vec3 vec31 = new Vec3(this.getX() - p_32535_.getX(), this.getEyeY() - p_32535_.getEyeY(), this.getZ() - p_32535_.getZ());
@@ -247,6 +251,15 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
             double d1 = vec3.dot(vec31);
             return d1 > 1.0D - 0.025D / d0 ? p_32535_.hasLineOfSight(this) : false;
         }
+    }
+
+    boolean isCloseToMe(Player p_32535_) {
+        //Equation of a sphere used to find radius, used for setting Herobrine's spherical agro distance
+        double distance = Math.sqrt(Math.pow(p_32535_.getX() - this.getX(), 2) + Math.pow(p_32535_.getZ() - this.getZ(),2) + Math.pow(p_32535_.getY() - this.getY(),2));
+        if (distance < 15) {
+            return true;
+        }
+        else {return false;}
     }
 
     protected float getStandingEyeHeight(Pose p_32517_, EntityDimensions p_32518_) {
@@ -323,9 +336,9 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
             if (flag2) {
                 this.level.gameEvent(GameEvent.TELEPORT, vec3, GameEvent.Context.of(this));
                 if (!this.isSilent()) {
-                    //this.level.playSound((Player)null, this.xo, this.yo, this.zo, SoundEvents.HEROBRINE_TELEPORT, this.getSoundSource(), 1.0F, 1.0F);
+                    this.level.playSound((Player)null, this.xo, this.yo, this.zo, SoundEvents.ENDERMAN_TELEPORT, this.getSoundSource(), 1.0F, 1.0F);
                     System.out.println("HEROBRINE_TELEPORT SOUND");
-                    //this.playSound(SoundEvents.HEROBRINE_TELEPORT, 1.0F, 1.0F);
+                    this.playSound(SoundEvents.ENDERMAN_TELEPORT, 1.0F, 1.0F);
                 }
             }
 
@@ -512,7 +525,7 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
             super(p_32573_, Player.class, 10, false, false, p_32574_);
             this.herobrine = p_32573_;
             this.isAngerInducing = (p_269940_) -> {
-                return (p_32573_.isLookingAtMe((Player)p_269940_) || p_32573_.isAngryAt(p_269940_)) && !p_32573_.hasIndirectPassenger(p_269940_);
+                return (p_32573_.isCloseToMe((Player)p_269940_) || p_32573_.isAngryAt(p_269940_)) && !p_32573_.hasIndirectPassenger(p_269940_);
             };
             this.startAggroTargetConditions = TargetingConditions.forCombat().range(this.getFollowDistance()).selector(this.isAngerInducing);
         }
