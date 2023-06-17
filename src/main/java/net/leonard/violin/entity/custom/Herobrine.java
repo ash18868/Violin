@@ -32,12 +32,7 @@ import net.minecraft.util.TimeUtil;
 import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityDimensions;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.NeutralMob;
-import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -275,26 +270,36 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
 
     public void aiStep() {
         //Debugging
-        float d = this.level.getSkyDarken();
-        System.out.println("Sky Darken:" + d);
-        if (!this.level.isNight()) {
-            System.out.println("It is not night");
-            float f = this.getLightLevelDependentMagicValue();
-            System.out.println("Light Level:" + f);
-            if (f > 0.3F && this.level.canSeeSky(this.blockPosition())) {
-                if(d < 5){
+        /*if(this.isAlive()) {
+            float d = this.level.getSkyDarken();
+            if (this.level.isDay() && !this.level.isClientSide) {
+                System.out.println("Sky Darken: " + d);
+                float f = this.getLightLevelDependentMagicValue();
+                if (f > 0.3F && this.level.canSeeSky(this.blockPosition())) {
+                    System.out.println("Light Level: " + f);
                     this.kill();
-                    this.moveTo(0, 180, 0);
-                    this.kill();
+                    this.moveTo(this.getX(), this.getY() - 10, this.getZ());
+                    //TODO is it moving all entities??? no
+                    //TODO Try moving this to a different constructor
                 }
             }
-        }
-        this.jumping = false;
-        if (!this.level.isClientSide) {
-            this.updatePersistentAnger((ServerLevel)this.level, true);
-        }
+        }*/
+
+        if (this.isAlive()) {
+            boolean flag = (this.level.isDay() && !this.level.isClientSide);
+            if (flag) {
+                //this.kill();
+                this.teleportTo(this.getX(), this.getY() - 10, this.getZ());
+                }
+
+            //this.jumping = false;
+            if (!this.level.isClientSide) {
+                this.updatePersistentAnger((ServerLevel) this.level, true);
+            }
+
 
         super.aiStep();
+        }
     }
 //TODO Attempt to delete this
     public boolean isSensitiveToWater() {
@@ -303,77 +308,16 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
 
     protected void customServerAiStep() {
         //Debugging
-        /*float d = this.level.getSkyDarken();
-        System.out.println("Sky Darken:" + d);
-        if (!this.level.isNight()) {
-            System.out.println("It is not night");
-            float f = this.getLightLevelDependentMagicValue();
-            System.out.println("Light Level:" + f);
-            if (f > 0.3F && this.level.canSeeSky(this.blockPosition())) {
-                this.kill();
-                this.discard();
-            }
-        }*/
+
 
         super.customServerAiStep();
     }
 
-    protected boolean teleport() {
-        if (!this.level.isClientSide() && this.isAlive()) {
-            double d0 = this.getX() + (this.random.nextDouble() - 0.5D) * 64.0D;
-            double d1 = this.getY() + (double)(this.random.nextInt(64) - 32);
-            double d2 = this.getZ() + (this.random.nextDouble() - 0.5D) * 64.0D;
-            return this.teleport(d0, d1, d2);
-        } else {
-            return false;
-        }
-    }
 
 
-    boolean teleportTowards(Entity p_32501_) {
-        Vec3 vec3 = new Vec3(this.getX() - p_32501_.getX(), this.getY(0.5D) - p_32501_.getEyeY(), this.getZ() - p_32501_.getZ());
-        vec3 = vec3.normalize();
-        double d0 = 16.0D;
-        double d1 = this.getX() + (this.random.nextDouble() - 0.5D) * 8.0D - vec3.x * 16.0D;
-        double d2 = this.getY() + (double)(this.random.nextInt(16) - 8) - vec3.y * 16.0D;
-        double d3 = this.getZ() + (this.random.nextDouble() - 0.5D) * 8.0D - vec3.z * 16.0D;
-        return this.teleport(d1, d2, d3);
-    }
 
-    private boolean teleport(double p_32544_, double p_32545_, double p_32546_) {
-        BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos(p_32544_, p_32545_, p_32546_);
 
-        while(blockpos$mutableblockpos.getY() > this.level.getMinBuildHeight() && !this.level.getBlockState(blockpos$mutableblockpos).getMaterial().blocksMotion()) {
-            blockpos$mutableblockpos.move(Direction.DOWN);
-        }
 
-        BlockState blockstate = this.level.getBlockState(blockpos$mutableblockpos);
-        boolean flag = blockstate.getMaterial().blocksMotion();
-        boolean flag1 = blockstate.getFluidState().is(FluidTags.WATER);
-        if (flag) {
-            System.out.println("flag");
-            net.minecraftforge.event.entity.EntityTeleportEvent.EnderEntity event = net.minecraftforge.event.ForgeEventFactory.onEnderTeleport(this, p_32544_, p_32545_, p_32546_);
-            if (event.isCanceled()) {
-                System.out.println("event.isCanceled");
-                return false;};
-            Vec3 vec3 = new Vec3(2, 62, -2); //It is not even using this
-            boolean flag2 = this.randomTeleport(event.getTargetX(), event.getTargetY(), event.getTargetZ(), true);
-            if (!flag2) {
-                System.out.println("flag2");
-                this.level.gameEvent(GameEvent.TELEPORT, vec3, GameEvent.Context.of(this));
-                if (!this.isSilent()) {
-                    System.out.println("notsilent");
-                    this.level.playSound((Player)null, this.xo, this.yo, this.zo, SoundEvents.ENDERMAN_TELEPORT, this.getSoundSource(), 1.0F, 1.0F);
-                    System.out.println("HEROBRINE_TELEPORT SOUND");
-                    this.playSound(SoundEvents.ENDERMAN_TELEPORT, 1.0F, 1.0F);
-                }
-            }
-
-            return flag2;
-        } else {
-            return false;
-        }
-    }
 
     protected SoundEvent getAmbientSound() {
         System.out.println("HEROBRINE_SCREAM AND HEROBRINE_AMBIENT SOUND");
@@ -415,31 +359,6 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
         return this.entityData.get(DATA_CARRY_STATE).orElse((BlockState)null);
     }
 
-    public boolean hurt(DamageSource p_32494_, float p_32495_) {
-        if (this.isInvulnerableTo(p_32494_)) {
-            return false;
-        } else {
-            boolean flag = p_32494_.getDirectEntity() instanceof ThrownPotion;
-            if (!p_32494_.is(DamageTypeTags.IS_PROJECTILE) && !flag) {
-                boolean flag2 = super.hurt(p_32494_, p_32495_);
-                if (!this.level.isClientSide() && !(p_32494_.getEntity() instanceof LivingEntity) && this.random.nextInt(10) != 0) {
-                    this.teleport();
-                }
-
-                return flag2;
-            } else {
-                boolean flag1 = flag && this.hurtWithCleanWater(p_32494_, (ThrownPotion)p_32494_.getDirectEntity(), p_32495_);
-
-                for(int i = 0; i < 64; ++i) {
-                    if (this.teleport()) {
-                        return true;
-                    }
-                }
-
-                return flag1;
-            }
-        }
-    }
 
     private boolean hurtWithCleanWater(DamageSource p_186273_, ThrownPotion p_186274_, float p_186275_) {
         ItemStack itemstack = p_186274_.getItem();
@@ -613,17 +532,7 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
                     super.start();
                 }
             } else {
-                if (this.target != null && !this.herobrine.isPassenger()) {
-                    if (this.herobrine.isLookingAtMe((Player)this.target)) {
-                        if (this.target.distanceToSqr(this.herobrine) < 16.0D) {
-                            this.herobrine.teleport();
-                        }
 
-                        this.teleportTime = 0;
-                    } else if (this.target.distanceToSqr(this.herobrine) > 256.0D && this.teleportTime++ >= this.adjustedTickDelay(30) && this.herobrine.teleportTowards(this.target)) {
-                        this.teleportTime = 0;
-                    }
-                }
 
                 super.tick();
             }
