@@ -289,7 +289,7 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
             boolean flag = (this.level.isDay() && !this.level.isClientSide);
             if (flag) {
                 //this.kill();
-                this.teleportTo(this.getX(), this.getY() - 10, this.getZ());
+                this.teleportTo(this.getX(), -65, this.getZ());
                 }
 
             //this.jumping = false;
