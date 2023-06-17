@@ -255,17 +255,8 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
         else {return false;}
     }
 
-    /*boolean isTooCloseToMe(Player p_32535_) {
-        //Equation of a sphere used to find radius, used for setting Herobrine's spherical agro distance
-        double distance = Math.sqrt(Math.pow(p_32535_.getX() - this.getX(), 2) + Math.pow(p_32535_.getZ() - this.getZ(),2) + Math.pow(p_32535_.getY() - this.getY(),2));
-        if (distance < 6) {
-            return true;
-        }
-        else {return false;}
-    }*/
-
     protected float getStandingEyeHeight(Pose p_32517_, EntityDimensions p_32518_) {
-        return 2.55F;
+        return 1.75F;
     }
 
     public void aiStep() {
@@ -501,7 +492,7 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
             double distance = Math.sqrt(Math.pow(target.getX() - this.herobrine.getX(), 2) + Math.pow(target.getZ() - this.herobrine.getZ(),2) + Math.pow(target.getY() - this.herobrine.getY(),2));
             System.out.println("Player: " + target.getX() + ", " + target.getY() + ", " + target.getZ());
             System.out.println("Herobrine: " + this.herobrine.getX() + ", " + this.herobrine.getY() + ", " + this.herobrine.getZ());
-            if (distance < 6) {
+            if (distance < 1.5) {
                 System.out.println("TOO CLOSE");
                 this.herobrine.teleportTo(this.herobrine.getX(), -65, this.herobrine.getZ());
             }
