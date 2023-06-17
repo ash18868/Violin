@@ -255,50 +255,31 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
         else {return false;}
     }
 
-    boolean isTooCloseToMe(Player p_32535_) {
+    /*boolean isTooCloseToMe(Player p_32535_) {
         //Equation of a sphere used to find radius, used for setting Herobrine's spherical agro distance
         double distance = Math.sqrt(Math.pow(p_32535_.getX() - this.getX(), 2) + Math.pow(p_32535_.getZ() - this.getZ(),2) + Math.pow(p_32535_.getY() - this.getY(),2));
         if (distance < 6) {
             return true;
         }
         else {return false;}
-    }
+    }*/
 
     protected float getStandingEyeHeight(Pose p_32517_, EntityDimensions p_32518_) {
         return 2.55F;
     }
 
     public void aiStep() {
-        //Debugging
-        /*if(this.isAlive()) {
-            float d = this.level.getSkyDarken();
-            if (this.level.isDay() && !this.level.isClientSide) {
-                System.out.println("Sky Darken: " + d);
-                float f = this.getLightLevelDependentMagicValue();
-                if (f > 0.3F && this.level.canSeeSky(this.blockPosition())) {
-                    System.out.println("Light Level: " + f);
-                    this.kill();
-                    this.moveTo(this.getX(), this.getY() - 10, this.getZ());
-                    //TODO is it moving all entities??? no
-                    //TODO Try moving this to a different constructor
-                }
-            }
-        }*/
-
         if (this.isAlive()) {
             boolean flag = (this.level.isDay() && !this.level.isClientSide);
             if (flag) {
-                //this.kill();
-                this.teleportTo(this.getX(), -65, this.getZ());
+                this.teleportTo(this.getX(), -65, this.getZ()); // This essentially kills Herobrine
                 }
 
-            //this.jumping = false;
             if (!this.level.isClientSide) {
                 this.updatePersistentAnger((ServerLevel) this.level, true);
             }
 
-
-        super.aiStep();
+        super.aiStep(); //tick
         }
     }
 //TODO Attempt to delete this
@@ -466,16 +447,12 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
         private final TargetingConditions startAggroTargetConditions;
         private final TargetingConditions continueAggroTargetConditions = TargetingConditions.forCombat().ignoreLineOfSight();
         private final Predicate<LivingEntity> isAngerInducing;
-        private final Predicate<LivingEntity> imScared;
 
         public HerobrineLookForPlayerGoal(net.leonard.violin.entity.custom.Herobrine p_32573_, @Nullable Predicate<LivingEntity> p_32574_) {
             super(p_32573_, Player.class, 10, false, false, p_32574_);
             this.herobrine = p_32573_;
             this.isAngerInducing = (p_269940_) -> {
                 return (p_32573_.isCloseToMe((Player)p_269940_) || p_32573_.isAngryAt(p_269940_)) && !p_32573_.hasIndirectPassenger(p_269940_);
-            };
-            this.imScared = (p_269940_) -> {
-                return (p_32573_.isTooCloseToMe((Player)p_269940_));
             };
             this.startAggroTargetConditions = TargetingConditions.forCombat().range(this.getFollowDistance()).selector(this.isAngerInducing);
         }
@@ -519,8 +496,20 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
             }
         }
 
+        public void isTooCloseToMe() {
+            //Equation of a sphere used to find radius, used for setting Herobrine's spherical agro distance
+            double distance = Math.sqrt(Math.pow(target.getX() - this.herobrine.getX(), 2) + Math.pow(target.getZ() - this.herobrine.getZ(),2) + Math.pow(target.getY() - this.herobrine.getY(),2));
+            System.out.println("Player: " + target.getX() + ", " + target.getY() + ", " + target.getZ());
+            System.out.println("Herobrine: " + this.herobrine.getX() + ", " + this.herobrine.getY() + ", " + this.herobrine.getZ());
+            if (distance < 6) {
+                System.out.println("TOO CLOSE");
+                this.herobrine.teleportTo(this.herobrine.getX(), -65, this.herobrine.getZ());
+            }
+        }
+
         public void tick() {
             System.out.println("tick");
+
             if (this.herobrine.getTarget() == null) {
                 super.setTarget((LivingEntity)null);
             }
@@ -531,7 +520,14 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
                     this.pendingTarget = null;
                     super.start();
                 }
-            } else {
+            }
+
+            if (this.target != null) {
+                this.isTooCloseToMe();
+                super.tick();
+            }
+
+            else {
 
 
                 super.tick();
