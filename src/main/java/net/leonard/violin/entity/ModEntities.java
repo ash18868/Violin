@@ -23,7 +23,7 @@ public class ModEntities {
 
     public static final RegistryObject<EntityType<Herobrine>> HEROBRINE =
             ENTITY_TYPES.register("herobrine",
-                    () -> EntityType.Builder.of(Herobrine::new, MobCategory.CREATURE)
+                    () -> EntityType.Builder.of(Herobrine::new, MobCategory.MONSTER)
                             .sized(1.0f, 0.5f) //.sized determines hitbox size
                             .build(new ResourceLocation(Violin.MOD_ID, "herobrine").toString()));
 

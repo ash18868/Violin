@@ -105,21 +105,21 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(2, new LookAtPlayerGoal(this, Player.class, 500.0f, 1.0f, false));
-        //this.goalSelector.addGoal(1, new net.leonard.violin.entity.custom.Herobrine.HerobrineFreezeWhenLookedAt(this));
+        this.goalSelector.addGoal(1, new Herobrine.HerobrineFreezeWhenLookedAt(this));
         this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.0D, false));
-        this.targetSelector.addGoal(1, new net.leonard.violin.entity.custom.Herobrine.HerobrineLookForPlayerGoal(this, this::isAngryAt));
+        this.targetSelector.addGoal(1, new Herobrine.HerobrineLookForPlayerGoal(this, this::isAngryAt));
 //Maybe put this back in        //
         this.targetSelector.addGoal(2, new HurtByTargetGoal(this));
         //this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Endermite.class, true, false));
         this.targetSelector.addGoal(4, new ResetUniversalAngerTargetGoal<>(this, false));
     }
 
-    public static AttributeSupplier.Builder createAttributes() {
+    public static AttributeSupplier setAttributes() {
         return Monster.createMonsterAttributes()
                 .add(Attributes.MAX_HEALTH, 40.0D)
                 .add(Attributes.MOVEMENT_SPEED, (double)0.3F)
                 .add(Attributes.ATTACK_DAMAGE, 7.0D)
-                .add(Attributes.FOLLOW_RANGE, 4.0D); //Changed from 64 to 4
+                .add(Attributes.FOLLOW_RANGE, 64.0D).build(); //Changed from 64 to 4
     }
 
     // More Geckolibrary
@@ -439,7 +439,7 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
         private final TargetingConditions continueAggroTargetConditions = TargetingConditions.forCombat().ignoreLineOfSight();
         private final Predicate<LivingEntity> isAngerInducing;
 
-        public HerobrineLookForPlayerGoal(net.leonard.violin.entity.custom.Herobrine p_32573_, @Nullable Predicate<LivingEntity> p_32574_) {
+        public HerobrineLookForPlayerGoal(Herobrine p_32573_, @Nullable Predicate<LivingEntity> p_32574_) {
             super(p_32573_, Player.class, 10, false, false, p_32574_);
             this.herobrine = p_32573_;
             this.isAngerInducing = (p_269940_) -> {
@@ -492,7 +492,7 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
             double distance = Math.sqrt(Math.pow(target.getX() - this.herobrine.getX(), 2) + Math.pow(target.getZ() - this.herobrine.getZ(),2) + Math.pow(target.getY() - this.herobrine.getY(),2));
             System.out.println("Player: " + target.getX() + ", " + target.getY() + ", " + target.getZ());
             System.out.println("Herobrine: " + this.herobrine.getX() + ", " + this.herobrine.getY() + ", " + this.herobrine.getZ());
-            if (distance < 1.5) {
+            if (distance < 1.6) {
                 System.out.println("TOO CLOSE");
                 this.herobrine.teleportTo(this.herobrine.getX(), -65, this.herobrine.getZ());
             }
