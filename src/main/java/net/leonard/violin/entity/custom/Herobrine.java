@@ -5,8 +5,6 @@ approach the player, but after getting within a certain distance will teleport a
 herobrine should also only be around at night
 */
 
-// Next step is to set Herobrine agro to active when both player is too close, and is looking at Herobrine
-
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
@@ -262,17 +260,35 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
         else {return false;}
     }
 
+    boolean isTooCloseToMe(Player p_32535_) {
+        //Equation of a sphere used to find radius, used for setting Herobrine's spherical agro distance
+        double distance = Math.sqrt(Math.pow(p_32535_.getX() - this.getX(), 2) + Math.pow(p_32535_.getZ() - this.getZ(),2) + Math.pow(p_32535_.getY() - this.getY(),2));
+        if (distance < 6) {
+            return true;
+        }
+        else {return false;}
+    }
+
     protected float getStandingEyeHeight(Pose p_32517_, EntityDimensions p_32518_) {
         return 2.55F;
     }
 
     public void aiStep() {
-        if (this.level.isClientSide) {
-            for(int i = 0; i < 2; ++i) {
-                this.level.addParticle(ParticleTypes.PORTAL, this.getRandomX(0.5D), this.getRandomY() - 0.25D, this.getRandomZ(0.5D), (this.random.nextDouble() - 0.5D) * 2.0D, -this.random.nextDouble(), (this.random.nextDouble() - 0.5D) * 2.0D);
+        //Debugging
+        float d = this.level.getSkyDarken();
+        System.out.println("Sky Darken:" + d);
+        if (!this.level.isNight()) {
+            System.out.println("It is not night");
+            float f = this.getLightLevelDependentMagicValue();
+            System.out.println("Light Level:" + f);
+            if (f > 0.3F && this.level.canSeeSky(this.blockPosition())) {
+                if(d < 5){
+                    this.kill();
+                    this.moveTo(0, 180, 0);
+                    this.kill();
+                }
             }
         }
-
         this.jumping = false;
         if (!this.level.isClientSide) {
             this.updatePersistentAnger((ServerLevel)this.level, true);
@@ -280,19 +296,24 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
 
         super.aiStep();
     }
-
+//TODO Attempt to delete this
     public boolean isSensitiveToWater() {
         return true;
     }
 
     protected void customServerAiStep() {
-        if (this.level.isDay() && this.tickCount >= this.targetChangeTime + 600) {
+        //Debugging
+        /*float d = this.level.getSkyDarken();
+        System.out.println("Sky Darken:" + d);
+        if (!this.level.isNight()) {
+            System.out.println("It is not night");
             float f = this.getLightLevelDependentMagicValue();
-            if (f > 0.5F && this.level.canSeeSky(this.blockPosition()) && this.random.nextFloat() * 30.0F < (f - 0.4F) * 2.0F) {
-                this.setTarget((LivingEntity)null);
-                this.teleport();
+            System.out.println("Light Level:" + f);
+            if (f > 0.3F && this.level.canSeeSky(this.blockPosition())) {
+                this.kill();
+                this.discard();
             }
-        }
+        }*/
 
         super.customServerAiStep();
     }
@@ -307,6 +328,7 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
             return false;
         }
     }
+
 
     boolean teleportTowards(Entity p_32501_) {
         Vec3 vec3 = new Vec3(this.getX() - p_32501_.getX(), this.getY(0.5D) - p_32501_.getEyeY(), this.getZ() - p_32501_.getZ());
@@ -328,14 +350,19 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
         BlockState blockstate = this.level.getBlockState(blockpos$mutableblockpos);
         boolean flag = blockstate.getMaterial().blocksMotion();
         boolean flag1 = blockstate.getFluidState().is(FluidTags.WATER);
-        if (flag && !flag1) {
+        if (flag) {
+            System.out.println("flag");
             net.minecraftforge.event.entity.EntityTeleportEvent.EnderEntity event = net.minecraftforge.event.ForgeEventFactory.onEnderTeleport(this, p_32544_, p_32545_, p_32546_);
-            if (event.isCanceled()) return false;
-            Vec3 vec3 = this.position();
+            if (event.isCanceled()) {
+                System.out.println("event.isCanceled");
+                return false;};
+            Vec3 vec3 = new Vec3(2, 62, -2); //It is not even using this
             boolean flag2 = this.randomTeleport(event.getTargetX(), event.getTargetY(), event.getTargetZ(), true);
-            if (flag2) {
+            if (!flag2) {
+                System.out.println("flag2");
                 this.level.gameEvent(GameEvent.TELEPORT, vec3, GameEvent.Context.of(this));
                 if (!this.isSilent()) {
+                    System.out.println("notsilent");
                     this.level.playSound((Player)null, this.xo, this.yo, this.zo, SoundEvents.ENDERMAN_TELEPORT, this.getSoundSource(), 1.0F, 1.0F);
                     System.out.println("HEROBRINE_TELEPORT SOUND");
                     this.playSound(SoundEvents.ENDERMAN_TELEPORT, 1.0F, 1.0F);
@@ -520,12 +547,16 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
         private final TargetingConditions startAggroTargetConditions;
         private final TargetingConditions continueAggroTargetConditions = TargetingConditions.forCombat().ignoreLineOfSight();
         private final Predicate<LivingEntity> isAngerInducing;
+        private final Predicate<LivingEntity> imScared;
 
         public HerobrineLookForPlayerGoal(net.leonard.violin.entity.custom.Herobrine p_32573_, @Nullable Predicate<LivingEntity> p_32574_) {
             super(p_32573_, Player.class, 10, false, false, p_32574_);
             this.herobrine = p_32573_;
             this.isAngerInducing = (p_269940_) -> {
                 return (p_32573_.isCloseToMe((Player)p_269940_) || p_32573_.isAngryAt(p_269940_)) && !p_32573_.hasIndirectPassenger(p_269940_);
+            };
+            this.imScared = (p_269940_) -> {
+                return (p_32573_.isTooCloseToMe((Player)p_269940_));
             };
             this.startAggroTargetConditions = TargetingConditions.forCombat().range(this.getFollowDistance()).selector(this.isAngerInducing);
         }
@@ -570,6 +601,7 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
         }
 
         public void tick() {
+            System.out.println("tick");
             if (this.herobrine.getTarget() == null) {
                 super.setTarget((LivingEntity)null);
             }
