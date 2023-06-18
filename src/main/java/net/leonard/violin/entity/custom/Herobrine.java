@@ -11,6 +11,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
+
+import net.leonard.violin.sound.ModSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
@@ -193,7 +195,7 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
         if (this.tickCount >= this.lastStareSound + 400) {
             this.lastStareSound = this.tickCount;
             if (!this.isSilent()) {
-                this.level.playLocalSound(this.getX(), this.getEyeY(), this.getZ(), SoundEvents.ENDERMAN_STARE, this.getSoundSource(), 2.5F, 1.0F, false);
+                this.level.playLocalSound(this.getX(), this.getEyeY(), this.getZ(), ModSounds.HEROBRINE_CHARGE.get(), this.getSoundSource(), 2.5F, 1.0F, false);
                 System.out.println("HEROBRINE_START SOUND");
             }
         }
@@ -250,6 +252,8 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
         //Equation of a sphere used to find radius, used for setting Herobrine's spherical agro distance
         double distance = Math.sqrt(Math.pow(p_32535_.getX() - this.getX(), 2) + Math.pow(p_32535_.getZ() - this.getZ(),2) + Math.pow(p_32535_.getY() - this.getY(),2));
         if (distance < 15) {
+            level.playSound(p_32535_, this.getX(), this.getEyeY(), this.getZ(), ModSounds.HEROBRINE_CHARGE.get(), this.getSoundSource(), 2.5F, 1.0F);
+            //Changed floats from 2.5  to 5
             return true;
         }
         else {return false;}
@@ -291,21 +295,21 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
 
 
 
-    protected SoundEvent getAmbientSound() {
+    /*protected SoundEvent getAmbientSound() {
         System.out.println("HEROBRINE_SCREAM AND HEROBRINE_AMBIENT SOUND");
         return this.isCreepy() ? SoundEvents.ENDERMAN_SCREAM : SoundEvents.ENDERMAN_AMBIENT;
 
-    }
+    }*/
 
-    protected SoundEvent getHurtSound(DamageSource p_32527_) {
+    /*protected SoundEvent getHurtSound(DamageSource p_32527_) {
         System.out.println("HEROBRINE_HURT SOUND");
         return SoundEvents.ENDERMAN_HURT;
-    }
+    }*/
 
-    protected SoundEvent getDeathSound() {
+    /*protected SoundEvent getDeathSound() {
         System.out.println("HEROBRINE_DEATH SOUND");
         return SoundEvents.ENDERMAN_DEATH;
-    }
+    }*/
 
     protected void dropCustomDeathLoot(DamageSource p_32497_, int p_32498_, boolean p_32499_) {
         super.dropCustomDeathLoot(p_32497_, p_32498_, p_32499_);
@@ -492,7 +496,7 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
             double distance = Math.sqrt(Math.pow(target.getX() - this.herobrine.getX(), 2) + Math.pow(target.getZ() - this.herobrine.getZ(),2) + Math.pow(target.getY() - this.herobrine.getY(),2));
             System.out.println("Player: " + target.getX() + ", " + target.getY() + ", " + target.getZ());
             System.out.println("Herobrine: " + this.herobrine.getX() + ", " + this.herobrine.getY() + ", " + this.herobrine.getZ());
-            if (distance < 1.6) {
+            if (distance < 1.5) {
                 System.out.println("TOO CLOSE");
                 this.herobrine.teleportTo(this.herobrine.getX(), -65, this.herobrine.getZ());
             }

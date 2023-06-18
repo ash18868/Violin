@@ -12,6 +12,7 @@ import net.leonard.violin.entity.client.HerobrineRenderer;
 //import net.leonard.violin.sound.ModSounds;
 import net.leonard.violin.item.ModCreativeModeTabs;
 import net.leonard.violin.item.ModItems;
+import net.leonard.violin.sound.ModSounds;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraft.world.item.CreativeModeTabs;
@@ -45,6 +46,9 @@ public class Violin
         ModItems.register(modEventBus);
         ModEntities.register(modEventBus);
 
+        ModSounds.register(modEventBus);
+
+        GeckoLib.initialize();
 
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
