@@ -1,14 +1,8 @@
 {
-  "herobrine_charge": {
-    "subtitle": "sounds.violin.herobrine_charge",
+  "herobrine_attack": {
+    "subtitle": "sounds.violin.herobrine_attack",
     "sounds": [
-      "violin:herobrine_charge"
-    ]
-  },
-  "herobrine_laugh": {
-    "subtitle": "sounds.violin.herobrine_laugh",
-    "sounds": [
-      "violin:herobrine_laugh"
+      "violin:herobrine_attack"
     ]
   }
 }

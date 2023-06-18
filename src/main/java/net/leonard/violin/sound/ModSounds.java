@@ -13,9 +13,7 @@ public class ModSounds {
     public static final DeferredRegister<SoundEvent> SOUND_EVENTS =
             DeferredRegister.create(ForgeRegistries.SOUND_EVENTS, Violin.MOD_ID);
 
-    public static final RegistryObject<SoundEvent> HEROBRINE_CHARGE = registerSoundEvent("herobrine_charge");
-
-    public static final RegistryObject<SoundEvent> HEROBRINE_LAUGH = registerSoundEvent("herobrine_laugh");
+    public static final RegistryObject<SoundEvent> HEROBRINE_ATTACK = registerSoundEvent("herobrine_attack");
 
     //public static final SoundEvent HEROBRINE_CHARGE = register("entity.herobrine_charge");
 

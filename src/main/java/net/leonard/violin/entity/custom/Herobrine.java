@@ -195,7 +195,7 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
         if (this.tickCount >= this.lastStareSound + 400) {
             this.lastStareSound = this.tickCount;
             if (!this.isSilent()) {
-                this.level.playLocalSound(this.getX(), this.getEyeY(), this.getZ(), ModSounds.HEROBRINE_CHARGE.get(), this.getSoundSource(), 2.5F, 1.0F, false);
+                this.level.playLocalSound(this.getX(), this.getEyeY(), this.getZ(), ModSounds.HEROBRINE_ATTACK.get(), this.getSoundSource(), 5.0F, 1.0F, false);
                 System.out.println("HEROBRINE_START SOUND");
             }
         }
@@ -252,8 +252,6 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
         //Equation of a sphere used to find radius, used for setting Herobrine's spherical agro distance
         double distance = Math.sqrt(Math.pow(p_32535_.getX() - this.getX(), 2) + Math.pow(p_32535_.getZ() - this.getZ(),2) + Math.pow(p_32535_.getY() - this.getY(),2));
         if (distance < 15) {
-            level.playSound(p_32535_, this.getX(), this.getEyeY(), this.getZ(), ModSounds.HEROBRINE_CHARGE.get(), this.getSoundSource(), 2.5F, 1.0F);
-            //Changed floats from 2.5  to 5
             return true;
         }
         else {return false;}
