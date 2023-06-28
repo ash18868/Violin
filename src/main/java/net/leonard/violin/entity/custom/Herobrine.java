@@ -157,13 +157,13 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
         if (this.tickCount >= this.lastStareSound + 400) {
             this.lastStareSound = this.tickCount;
             if (!this.isSilent()) {
-                this.level.playLocalSound(this.getX(), this.getEyeY(), this.getZ(), ModSounds.HEROBRINE_ATTACK.get(), this.getSoundSource(), 5.0F, 1.0F, false);
+                this.level().playLocalSound(this.getX(), this.getEyeY(), this.getZ(), ModSounds.HEROBRINE_ATTACK.get(), this.getSoundSource(), 5.0F, 1.0F, false);
             }
         }
     }
 
     public void onSyncedDataUpdated(EntityDataAccessor<?> p_32513_) {
-        if (DATA_CREEPY.equals(p_32513_) && this.hasBeenStaredAt() && this.level.isClientSide) {
+        if (DATA_CREEPY.equals(p_32513_) && this.hasBeenStaredAt() && this.level().isClientSide) {
             this.playStareSound();
         }
 
@@ -201,12 +201,12 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
     //update variables on tick
     public void aiStep() {
         if (this.isAlive()) {
-            boolean flag = (this.level.isDay() && !this.level.isClientSide);
+            boolean flag = (this.level().isDay() && !this.level().isClientSide);
             if (flag) {
                 this.teleportTo(this.getX(), -65, this.getZ()); // This essentially kills Herobrine
                 }
-            if (!this.level.isClientSide) {
-                this.updatePersistentAnger((ServerLevel) this.level, true);
+            if (!this.level().isClientSide) {
+                this.updatePersistentAnger((ServerLevel) this.level(), true);
             }
 
         super.aiStep(); //tick
@@ -277,7 +277,7 @@ public class Herobrine extends Monster implements NeutralMob, GeoEntity {
         }
 
         public boolean canUse() {
-            this.pendingTarget = this.herobrine.level.getNearestPlayer(this.startAggroTargetConditions, this.herobrine);
+            this.pendingTarget = this.herobrine.level().getNearestPlayer(this.startAggroTargetConditions, this.herobrine);
             return this.pendingTarget != null;
         }
 

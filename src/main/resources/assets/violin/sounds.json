@@ -4,5 +4,21 @@
     "sounds": [
       "violin:herobrine_attack"
     ]
+  },
+  "revenge": {
+    "sounds": [
+      {
+        "name": "violin:revenge",
+        "stream": true
+      }
+    ]
+  },
+  "fallen_kingdom": {
+    "sounds": [
+      {
+        "name": "violin:fallen_kingdom",
+        "stream": true
+      }
+    ]
   }
 }

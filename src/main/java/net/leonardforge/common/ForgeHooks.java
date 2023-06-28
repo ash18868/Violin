@@ -6,7 +6,10 @@
 package net.leonardforge.common;
 
 import com.google.common.base.Strings;
-import com.google.common.collect.*;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -17,7 +20,6 @@ import net.leonard.violin.entity.custom.Herobrine;
 import net.leonardforge.event.entity.living.HerobrineAngerEvent;
 import net.minecraft.ChatFormatting;
 import net.minecraft.ResourceLocationException;
-import net.minecraft.advancements.Advancement;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -40,6 +42,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.metadata.pack.PackMetadataSection;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.stats.Stats;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagEntry;
@@ -73,10 +77,8 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
-import net.minecraft.world.level.BaseSpawner;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeGenerationSettings;
 import net.minecraft.world.level.biome.BiomeSpecialEffects;
@@ -93,7 +95,6 @@ import net.minecraft.world.level.storage.LevelStorageSource;
 import net.minecraft.world.level.storage.WorldData;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.LootTable;
-import net.minecraft.world.level.storage.loot.LootTables;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -118,7 +119,6 @@ import net.minecraftforge.event.entity.living.LivingEvent.LivingTickEvent;
 import net.minecraftforge.event.entity.player.*;
 import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.event.level.NoteBlockEvent;
-import net.minecraftforge.eventbus.api.Event.Result;
 import net.minecraftforge.fluids.FluidType;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoader;
@@ -128,6 +128,7 @@ import net.minecraftforge.registries.GameData;
 import net.minecraftforge.registries.RegistryManager;
 import net.minecraftforge.resource.ResourcePackLoader;
 import net.minecraftforge.server.permission.PermissionAPI;
+import org.apache.commons.lang3.function.TriFunction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
@@ -180,23 +181,6 @@ public class ForgeHooks
     {
         MinecraftForge.EVENT_BUS.post(new DifficultyChangeEvent(difficulty, oldDifficulty));
     }
-
-    //Optifine Helper Functions u.u, these are here specifically for Optifine
-    //Note: When using Optifine, these methods are invoked using reflection, which
-    //incurs a major performance penalty.
-    // TODO: Remove in 1.20
-    /*@Deprecated(since = "1.19.2", forRemoval = true)
-    public static void onLivingSetAttackTarget(LivingEntity entity, LivingEntity target)
-    {
-        MinecraftForge.EVENT_BUS.post(new LivingSetAttackTargetEvent(entity, target));
-    }*/
-
-    // TODO: Remove in 1.20
-    /*@Deprecated(since = "1.19.2", forRemoval = true)
-    public static void onLivingSetAttackTarget(LivingEntity entity, LivingEntity target, ILivingTargetType targetType)
-    {
-        MinecraftForge.EVENT_BUS.post(new LivingSetAttackTargetEvent(entity, target, targetType));
-    }*/
 
     public static LivingChangeTargetEvent onLivingChangeTarget(LivingEntity entity, LivingEntity originalTarget, ILivingTargetType targetType)
     {
@@ -337,7 +321,7 @@ public class ForgeHooks
         if (MinecraftForge.EVENT_BUS.post(event))
             return null;
 
-        if (!player.level.isClientSide)
+        if (!player.level().isClientSide)
             player.getCommandSenderWorld().addFreshEntity(event.getEntity());
         return event.getEntity();
     }
@@ -611,7 +595,7 @@ public class ForgeHooks
 
     public static int onGrindstoneChange(@NotNull ItemStack top, @NotNull ItemStack bottom, Container outputSlot, int xp)
     {
-        GrindstoneEvent.OnplaceItem e = new GrindstoneEvent.OnplaceItem(top, bottom, xp);
+        GrindstoneEvent.OnPlaceItem e = new GrindstoneEvent.OnPlaceItem(top, bottom, xp);
         if (MinecraftForge.EVENT_BUS.post(e))
         {
             outputSlot.setItem(0, ItemStack.EMPTY);
@@ -749,43 +733,38 @@ public class ForgeHooks
         return newGameType;
     }
 
-    private static ThreadLocal<Deque<LootTableContext>> lootContext = new ThreadLocal<Deque<LootTableContext>>();
-    private static LootTableContext getLootTableContext()
+    public static TriFunction<ResourceLocation, JsonElement, ResourceManager, Optional<LootTable>> getLootTableDeserializer(Gson gson, String directory)
     {
-        LootTableContext ctx = lootContext.get().peek();
-
-        if (ctx == null)
-            throw new JsonParseException("Invalid call stack, could not grab json context!"); // Should I throw this? Do we care about custom deserializers outside the manager?
-
-        return ctx;
+        return (location, data, resourceManager) -> {
+            try
+            {
+                Resource resource = resourceManager.getResource(location.withPath(directory + "/" + location.getPath() + ".json")).orElse(null);
+                boolean custom = resource == null || !resource.isBuiltin();
+                return Optional.ofNullable(loadLootTable(gson, location, data, custom));
+            }
+            catch (Exception exception)
+            {
+                LOGGER.error("Couldn't parse element {}:{}", directory, location, exception);
+                return Optional.empty();
+            }
+        };
     }
 
-    @Nullable
-    public static LootTable loadLootTable(Gson gson, ResourceLocation name, JsonElement data, boolean custom, LootTables lootTableManager)
+    public static LootTable loadLootTable(Gson gson, ResourceLocation name, JsonElement data, boolean custom)
     {
-        Deque<LootTableContext> que = lootContext.get();
-        if (que == null)
-        {
-            que = Queues.newArrayDeque();
-            lootContext.set(que);
-        }
-
-        LootTable ret = null;
+        LootTable ret;
         try
         {
-            que.push(new LootTableContext(name, custom));
             ret = gson.fromJson(data, LootTable.class);
             ret.setLootTableId(name);
-            que.pop();
         }
         catch (JsonParseException e)
         {
-            que.pop();
             throw e;
         }
 
         if (!custom)
-            ret = ForgeEventFactory.loadLootTable(name, ret, lootTableManager);
+            ret = ForgeEventFactory.loadLootTable(name, ret);
 
         if (ret != null)
            ret.freeze();
@@ -837,96 +816,11 @@ public class ForgeHooks
         Biome apply(final Biome.ClimateSettings climate, final BiomeSpecialEffects effects, final BiomeGenerationSettings gen, final MobSpawnSettings spawns);
     }
 
-    private static class LootTableContext
-    {
-        public final ResourceLocation name;
-        private final boolean vanilla;
-        public final boolean custom;
-        public int poolCount = 0;
-        public int entryCount = 0;
-        private HashSet<String> entryNames = Sets.newHashSet();
-
-        private LootTableContext(ResourceLocation name, boolean custom)
-        {
-            this.name = name;
-            this.custom = custom;
-            this.vanilla = "minecraft".equals(this.name.getNamespace());
-        }
-
-        private void resetPoolCtx()
-        {
-            this.entryCount = 0;
-            this.entryNames.clear();
-        }
-
-        public String validateEntryName(@Nullable String name)
-        {
-            if (name != null && !this.entryNames.contains(name))
-            {
-                this.entryNames.add(name);
-                return name;
-            }
-
-            if (!this.vanilla)
-                throw new JsonParseException("Loot Table \"" + this.name.toString() + "\" Duplicate entry name \"" + name + "\" for pool #" + (this.poolCount - 1) + " entry #" + (this.entryCount-1));
-
-            int x = 0;
-            while (this.entryNames.contains(name + "#" + x))
-                x++;
-
-            name = name + "#" + x;
-            this.entryNames.add(name);
-
-            return name;
-        }
-    }
-
-    public static String readPoolName(JsonObject json)
-    {
-        LootTableContext ctx = ForgeHooks.getLootTableContext();
-        ctx.resetPoolCtx();
-
-        if (json.has("name"))
-            return GsonHelper.getAsString(json, "name");
-
-        if (ctx.custom)
-            return "custom#" + json.hashCode(); //We don't care about custom ones modders shouldn't be editing them!
-
-        ctx.poolCount++;
-
-        if (!ctx.vanilla)
-            throw new JsonParseException("Loot Table \"" + ctx.name.toString() + "\" Missing `name` entry for pool #" + (ctx.poolCount - 1));
-
-        return ctx.poolCount == 1 ? "main" : "pool" + (ctx.poolCount - 1);
-    }
-
-    public static String readLootEntryName(JsonObject json, String type)
-    {
-        LootTableContext ctx = ForgeHooks.getLootTableContext();
-        ctx.entryCount++;
-
-        if (json.has("entryName"))
-            return ctx.validateEntryName(GsonHelper.getAsString(json, "entryName"));
-
-        if (ctx.custom)
-            return "custom#" + json.hashCode(); //We don't care about custom ones modders shouldn't be editing them!
-
-        String name = null;
-        if ("item".equals(type))
-            name = GsonHelper.getAsString(json, "name");
-        else if ("loot_table".equals(type))
-            name = GsonHelper.getAsString(json, "name");
-        else if ("empty".equals(type))
-            name = "empty";
-
-        return ctx.validateEntryName(name);
-    }
-
     public static boolean onCropsGrowPre(Level level, BlockPos pos, BlockState state, boolean def)
     {
         BlockEvent ev = new BlockEvent.CropGrowEvent.Pre(level,pos,state);
         MinecraftForge.EVENT_BUS.post(ev);
-        return (ev.getResult() == Result.ALLOW || (ev.getResult() == Result.DEFAULT && def));
+        return (ev.getResult() == net.minecraftforge.eventbus.api.Event.Result.ALLOW || (ev.getResult() == net.minecraftforge.eventbus.api.Event.Result.DEFAULT && def));
     }
 
     public static void onCropsGrowPost(Level level, BlockPos pos, BlockState state)
@@ -939,20 +833,11 @@ public class ForgeHooks
     {
         CriticalHitEvent hitResult = new CriticalHitEvent(player, target, damageModifier, vanillaCritical);
         MinecraftForge.EVENT_BUS.post(hitResult);
-        if (hitResult.getResult() == Result.ALLOW || (vanillaCritical && hitResult.getResult() == Result.DEFAULT))
+        if (hitResult.getResult() == net.minecraftforge.eventbus.api.Event.Result.ALLOW || (vanillaCritical && hitResult.getResult() == net.minecraftforge.eventbus.api.Event.Result.DEFAULT))
         {
             return hitResult;
         }
         return null;
-    }
-
-    /**
-     * @deprecated See {@link ForgeEventFactory#onAdvancementEarnedEvent} and {@link ForgeEventFactory#onAdvancementProgressedEvent}
-     */
-    @Deprecated(forRemoval = true, since = "1.19.2")
-    public static void onAdvancement(ServerPlayer player, Advancement advancement)
-    {
-        MinecraftForge.EVENT_BUS.post(new AdvancementEvent(player, advancement));
     }
 
     /**
@@ -1036,11 +921,6 @@ public class ForgeHooks
         if (MinecraftForge.EVENT_BUS.post(event))
             return -1;
         return event.getVanillaNoteId();
-    }
-
-    public static int canEntitySpawn(Mob entity, LevelAccessor world, double x, double y, double z, BaseSpawner spawner, MobSpawnType spawnReason) {
-        Result res = ForgeEventFactory.canEntitySpawn(entity, world, x, y, z, null, spawnReason);
-        return res == Result.DEFAULT ? 0 : res == Result.DENY ? -1 : 1;
     }
 
     public static boolean hasNoElements(Ingredient ingredient)
@@ -1134,7 +1014,7 @@ public class ForgeHooks
         FurnaceBlockEntity.getFuel().entrySet().forEach(e -> VANILLA_BURNS.put(ForgeRegistries.ITEMS.getDelegateOrThrow(e.getKey()), e.getValue()));
     }
 
-    /*
+    /**
      * All loot table drops should be passed to this function so that mod added effects
      * (e.g. smelting enchantments) can be processed.
      *
@@ -1147,20 +1027,20 @@ public class ForgeHooks
      * @implNote This method will use the {@linkplain LootTableIdCondition#UNKNOWN_LOOT_TABLE
      *           unknown loot table marker} when redirecting.
      */
-    //@Deprecated
-    /*public static List<ItemStack> modifyLoot(List<ItemStack> list, LootContext context) {
+   /* @Deprecated
+    public static List<ItemStack> modifyLoot(List<ItemStack> list, LootContext context) {
         return modifyLoot(LootTableIdCondition.UNKNOWN_LOOT_TABLE, ObjectArrayList.wrap((ItemStack[]) list.toArray()), context);
     }*/
 
-    /*
+    /**
      * Handles the modification of loot table drops via the registered Global Loot Modifiers,
      * so that custom effects can be processed.
      *
      * <p>All loot-table generated loot should be passed to this function.</p>
      *
-     * @param lootTableId The ID of the loot table currently being queried
-     * @param generatedLoot The loot generated by the loot table
-     * @param context The loot context that generated the loot, unmodified
+     //* @param lootTableId The ID of the loot table currently being queried
+     //* @param generatedLoot The loot generated by the loot table
+     //* @param context The loot context that generated the loot, unmodified
      * @return The modified list of drops
      *
      * @apiNote The given context will be modified by this method to also store the ID of the
@@ -1174,7 +1054,7 @@ public class ForgeHooks
         }
         return generatedLoot;
     }*/
-
+    @Deprecated
     public static List<String> getModPacks()
     {
         List<String> modpacks = ResourcePackLoader.getPackNames();
@@ -1257,20 +1137,11 @@ public class ForgeHooks
     }
 
     /**
-     * @deprecated To be removed in 1.20.
-     * Use {@link #readAdditionalLevelSaveData(CompoundTag, LevelStorageSource.LevelDirectory)} instead.
-     */
-    @Deprecated(forRemoval = true, since = "1.19.2")
-    public static void readAdditionalLevelSaveData(CompoundTag rootTag) {
-        readAdditionalLevelSaveData(rootTag, null);
-    }
-
-    /**
      * @param rootTag Level data file contents.
-     * @param levelDirectory Level currently being loaded. TODO 1.20 - Remove nullable annotation
+     * @param levelDirectory Level currently being loaded.
      */
     @ApiStatus.Internal
-    public static void readAdditionalLevelSaveData(CompoundTag rootTag, @Nullable LevelStorageSource.LevelDirectory levelDirectory)
+    public static void readAdditionalLevelSaveData(CompoundTag rootTag, LevelStorageSource.LevelDirectory levelDirectory)
     {
         CompoundTag tag = rootTag.getCompound("fml");
         if (tag.contains("LoadingModList"))

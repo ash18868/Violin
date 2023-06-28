@@ -22,6 +22,8 @@ public class ModItemModelProvider extends ItemModelProvider {
         /*simpleItem(ModItems.BLACK_OPAL);
         simpleItem(ModItems.RAW_BLACK_OPAL);
         saplingItem(ModBlocks.EBONY_SAPLING);*/
+        simpleItem(ModItems.REVENGE_MUSIC_DISC);
+        simpleItem(ModItems.FALLEN_KINGDOM_MUSIC_DISC);
 
         withExistingParent(ModItems.TIGER_SPAWN_EGG.getId().getPath(), mcLoc("item/template_spawn_egg"));
         withExistingParent(ModItems.HEROBRINE_SPAWN_EGG.getId().getPath(), mcLoc("item/template_spawn_egg"));

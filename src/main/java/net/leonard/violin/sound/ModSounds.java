@@ -15,7 +15,9 @@ public class ModSounds {
 
     public static final RegistryObject<SoundEvent> HEROBRINE_ATTACK = registerSoundEvent("herobrine_attack");
 
-    //public static final SoundEvent HEROBRINE_CHARGE = register("entity.herobrine_charge");
+    public static final RegistryObject<SoundEvent> REVENGE = registerSoundEvent("revenge");
+
+    public static final RegistryObject<SoundEvent> FALLEN_KINGDOM = registerSoundEvent("fallen_kingdom");
 
 
 

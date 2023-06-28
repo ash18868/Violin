@@ -1,6 +1,13 @@
 {
-  "item.violin.tiger_spawn_egg": "Tiger Spawn Egg",
   "item.violin.herobrine_spawn_egg": "Herobrine Spawn Egg",
+  "item.violin.tiger_spawn_egg": "Tiger Spawn Egg",
+  "item.violin.raw_black_opal": "Raw Black Opal",
+  "item.violin.revenge_music_disc": "Revenge",
+  "item.violin.revenge_music_disc.desc": "Revenge by CaptainSparklez",
+  "item.violin.fallen_kingdom_music_disc": "Fallen Kingdom",
+  "item.violin.fallen_kingdom_music_disc.desc": "Fallen Kingdom by CaptainSparklez",
+  "item.violin.poop": "Poop",
+  "entity.violin.herobrine": "Herobrine",
 
   "creativemodetab.violin_tab": "Violin Tab"
 }
